@@ -7,8 +7,15 @@ if (!BASE_URL) {
 }
 
 const api = axios.create({
-  baseURL: BASE_URL, // ✅ IMPORTANT (NO /api here if env already has it)
+  baseURL: BASE_URL,
   withCredentials: true,
+});
+
+// ✅ ADD THIS — sends token on every request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
 
 api.interceptors.response.use(
