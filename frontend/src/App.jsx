@@ -8,7 +8,7 @@ import MainLayout from "./components/layout/MainLayout";
 import LoadingSpinner from "./components/ui/LoadingSpinner";
 import GroupChatPage from "./pages/GroupChatPage";
 
-// Lazy loaded pages
+// Lazy pages
 const EditProfilePage = lazy(() => import("./pages/EditProfilePage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const RegisterPage = lazy(() => import("./pages/RegisterPage"));
@@ -34,11 +34,21 @@ const PublicRoute = ({ children }) => {
 };
 
 export default function App() {
-  const { getMe, isAuthenticated } = useAuthStore();
+  const { getMe, loadUser } = useAuthStore();
+
+  // 🔥 FIX 1: load user on app start
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  // 🔥 FIX 2: fetch user only when authenticated changes
+  const { isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    if (isAuthenticated) getMe();
-  }, []);
+    if (isAuthenticated) {
+      getMe();
+    }
+  }, [isAuthenticated]);
 
   return (
     <ThemeProvider>
@@ -51,17 +61,19 @@ export default function App() {
               style: { borderRadius: "12px", fontSize: "14px" },
             }}
           />
+
           <Suspense fallback={<LoadingSpinner fullScreen />}>
             <Routes>
-              {/* Public routes */}
+
+              {/* PUBLIC */}
               <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
               <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
-              {/* Password reset routes — accessible whether logged in or not */}
+              {/* PASSWORD */}
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
-              {/* Protected routes */}
+              {/* PROTECTED */}
               <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
                 <Route index element={<HomePage />} />
                 <Route path="explore" element={<ExplorePage />} />
@@ -73,10 +85,11 @@ export default function App() {
                 <Route path="notifications" element={<NotificationsPage />} />
                 <Route path="reels" element={<ReelsPage />} />
                 <Route path="hashtag/:tag" element={<HashtagPage />} />
-                <Route path="/groups" element={<GroupChatPage />} />
+                <Route path="groups" element={<GroupChatPage />} />
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />
+
             </Routes>
           </Suspense>
         </BrowserRouter>
