@@ -7,7 +7,7 @@ if (!BASE_URL) {
 }
 
 const api = axios.create({
-  baseURL: BASE_URL, // ✅ FIXED
+  baseURL: BASE_URL, // ✅ IMPORTANT (NO /api here if env already has it)
   withCredentials: true,
 });
 
