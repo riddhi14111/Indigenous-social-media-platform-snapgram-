@@ -13,10 +13,15 @@ export const useAuthStore = create(
         set({ isLoading: true });
 
         try {
-          const res = await api.post("/auth/login", { email, password });
+          const res = await api.post("/auth/login", {
+            email,
+            password,
+          });
+
+          const user = res?.data?.user || null;
 
           set({
-            user: res.data.user || null,
+            user,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -27,7 +32,8 @@ export const useAuthStore = create(
 
           return {
             success: false,
-            message: error?.response?.data?.message || "Login failed",
+            message:
+              error?.response?.data?.message || "Login failed",
           };
         }
       },
@@ -38,8 +44,10 @@ export const useAuthStore = create(
         try {
           const res = await api.post("/auth/register", data);
 
+          const user = res?.data?.user || null;
+
           set({
-            user: res.data.user || null,
+            user,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -50,7 +58,8 @@ export const useAuthStore = create(
 
           return {
             success: false,
-            message: error?.response?.data?.message || "Register failed",
+            message:
+              error?.response?.data?.message || "Register failed",
           };
         }
       },
@@ -64,6 +73,12 @@ export const useAuthStore = create(
     }),
     {
       name: "snapgram-auth",
+
+      // ✅ IMPORTANT FIX
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
 );
