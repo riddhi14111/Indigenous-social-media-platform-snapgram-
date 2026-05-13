@@ -99,7 +99,7 @@ socket.on("joinGroup", (groupId) => {
 });
 
 app.use(cors({
-  origin: ["https://cheery-stroopwafel-de0527.netlify.app", "http://localhost:5173", process.env.CLIENT_URL],
+  origin: ["https://indigenous-social-media-platform.onrender.com", "http://localhost:5173", process.env.CLIENT_URL],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie", "Set-Cookie"],
