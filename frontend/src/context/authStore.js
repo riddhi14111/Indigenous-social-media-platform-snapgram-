@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import api from "../api/api"; // ✅ FIXED IMPORT
+import api from "../utils/api"; // ✅ FIXED IMPORT
 
 export const useAuthStore = create(
   persist(
