@@ -1,94 +1,135 @@
-import { create } from "zustand";
-import api from "../api"; // ✅ FIXED IMPORT (IMPORTANT)
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Camera, Eye, EyeOff, Loader } from "lucide-react";
+import { useAuthStore } from "../context/authStore";
+import toast from "react-hot-toast";
 
-export const useAuthStore = create((set, get) => ({
-  user: JSON.parse(localStorage.getItem("user")) || null,
-  isLoading: false,
-  isAuthenticated: !!localStorage.getItem("token"),
+export default function LoginPage() {
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
 
-  // 🔥 LOGIN
-  login: async (email, password) => {
-    set({ isLoading: true });
+  const [showPassword, setShowPassword] = useState(false);
 
-    try {
-      const res = await api.post("/auth/login", {
-        email,
-        password,
-      });
+  const { login, isLoading } = useAuthStore();
+  const navigate = useNavigate();
 
-      const { token, user } = res.data;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-      // ✅ SAVE TOKEN + USER
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+    const result = await login(form.email, form.password);
 
-      set({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-
-      return { success: true };
-    } catch (err) {
-      set({ isLoading: false });
-
-      return {
-        success: false,
-        message: err.response?.data?.message || "Login failed",
-      };
+    if (result.success) {
+      toast.success("Login successful 🚀");
+      navigate("/");
+    } else {
+      toast.error(result.message);
     }
-  },
+  };
 
-  // 🔥 REGISTER
-  register: async (data) => {
-    set({ isLoading: true });
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-black p-4">
 
-    try {
-      const res = await api.post("/auth/register", data);
+      <div className="w-full max-w-sm">
 
-      const { token, user } = res.data;
+        {/* CARD */}
+        <div className="bg-white dark:bg-neutral-900 border rounded-2xl p-8 shadow-sm">
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+          {/* LOGO */}
+          <div className="text-center mb-8">
+            <div className="w-10 h-10 mx-auto snapgram-gradient rounded-xl flex items-center justify-center">
+              <Camera className="text-white" size={22} />
+            </div>
 
-      set({
-        user,
-        isAuthenticated: true,
-        isLoading: false,
-      });
+            <h1 className="text-3xl font-bold mt-3 snapgram-gradient-text">
+              Snapgram
+            </h1>
 
-      return { success: true };
-    } catch (err) {
-      set({ isLoading: false });
+            <p className="text-sm text-gray-500 mt-2">
+              Welcome back 👋
+            </p>
+          </div>
 
-      return {
-        success: false,
-        message: err.response?.data?.message || "Register failed",
-      };
-    }
-  },
+          {/* FORM */}
+          <form onSubmit={handleSubmit} className="space-y-4">
 
-  // 🔥 LOGOUT
-  logout: () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+            {/* EMAIL */}
+            <input
+              type="email"
+              placeholder="Email"
+              value={form.email}
+              onChange={(e) =>
+                setForm({ ...form, email: e.target.value })
+              }
+              className="input-field"
+              required
+            />
 
-    set({
-      user: null,
-      isAuthenticated: false,
-    });
-  },
+            {/* PASSWORD */}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={form.password}
+                onChange={(e) =>
+                  setForm({ ...form, password: e.target.value })
+                }
+                className="input-field pr-10"
+                required
+              />
 
-  // 🔥 LOAD USER ON REFRESH
-  loadUser: () => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+              >
+                {showPassword ? (
+                  <EyeOff size={18} />
+                ) : (
+                  <Eye size={18} />
+                )}
+              </button>
+            </div>
 
-    if (token && user) {
-      set({
-        user: JSON.parse(user),
-        isAuthenticated: true,
-      });
-    }
-  },
-}));
+            {/* BUTTON */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-primary w-full flex justify-center items-center gap-2"
+            >
+              {isLoading ? (
+                <Loader className="animate-spin" size={18} />
+              ) : (
+                "Login"
+              )}
+            </button>
+          </form>
+
+          {/* FORGOT */}
+          <div className="mt-5 text-center text-sm">
+            <Link
+              to="/forgot-password"
+              className="text-blue-500 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
+        </div>
+
+        {/* SIGNUP */}
+        <p className="text-center mt-4 text-sm">
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="text-blue-500 font-semibold"
+          >
+            Sign up
+          </Link>
+        </p>
+
+      </div>
+    </div>
+  );
+}
