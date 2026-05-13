@@ -1,0 +1,11 @@
+﻿import express from "express";
+import { protect } from "../middleware/auth.middleware.js";
+import { getConversations, getMessages, sendMessage, deleteMessage, markRead, uploadMsgImage } from "../controllers/message.controller.js";
+const router = express.Router();
+router.use(protect);
+router.get("/conversations", getConversations);
+router.put("/:userId/read", markRead);
+router.delete("/:messageId", deleteMessage);
+router.get("/:userId", getMessages);
+router.post("/:userId", uploadMsgImage, sendMessage);
+export default router;
