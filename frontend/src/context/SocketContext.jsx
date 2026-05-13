@@ -1,42 +1,81 @@
-﻿useEffect(() => {
-  if (isAuthenticated && user) {
-    const newSocket = io(import.meta.env.VITE_SOCKET_URL, {
-      query: { userId: user._id },
-      withCredentials: true,
-    });
+﻿import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
+import { io } from "socket.io-client";
+import { useAuthStore } from "./authStore";
 
-    newSocket.on("onlineUsers", (users) => setOnlineUsers(users));
-    newSocket.on("newNotification", () =>
-      setNotifCount((c) => c + 1)
-    );
+const SocketContext = createContext(null);
 
-    newSocket.on("incomingCall", ({ from, fromName, fromAvatar, offer }) => {
-      setIncomingCall({
-        partnerId: from,
-        partnerName: fromName || "Unknown",
-        partnerAvatar: fromAvatar || "",
-        offer,
-        isIncoming: true,
+// ✅ THIS IS REQUIRED (your error fix)
+export const useSocket = () => useContext(SocketContext);
+
+export const SocketProvider = ({ children }) => {
+  const [socket, setSocket] = useState(null);
+  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [incomingCall, setIncomingCall] = useState(null);
+  const [notifCount, setNotifCount] = useState(0);
+  const ringTimeoutRef = useRef(null);
+
+  const { user, isAuthenticated } = useAuthStore();
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const newSocket = io(import.meta.env.VITE_SOCKET_URL, {
+        query: { userId: user._id },
+        withCredentials: true,
       });
 
-      if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
+      newSocket.on("onlineUsers", (users) => setOnlineUsers(users));
 
-      ringTimeoutRef.current = setTimeout(() => {
-        newSocket.emit("rejectCall", { to: from });
-        setIncomingCall(null);
-      }, 30000);
-    });
+      newSocket.on("newNotification", () =>
+        setNotifCount((c) => c + 1)
+      );
 
-    setSocket(newSocket);
+      newSocket.on("incomingCall", ({ from, fromName, fromAvatar, offer }) => {
+        setIncomingCall({
+          partnerId: from,
+          partnerName: fromName || "Unknown",
+          partnerAvatar: fromAvatar || "",
+          offer,
+          isIncoming: true,
+        });
 
-    return () => {
-      newSocket.close();
-      if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
-    };
-  } else {
-    if (socket) {
-      socket.close();
-      setSocket(null);
+        if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
+
+        ringTimeoutRef.current = setTimeout(() => {
+          newSocket.emit("rejectCall", { to: from });
+          setIncomingCall(null);
+        }, 30000);
+      });
+
+      setSocket(newSocket);
+
+      return () => {
+        newSocket.close();
+        if (ringTimeoutRef.current) clearTimeout(ringTimeoutRef.current);
+      };
+    } else {
+      if (socket) {
+        socket.close();
+        setSocket(null);
+      }
     }
-  }
-}, [isAuthenticated, user]);
+  }, [isAuthenticated, user]);
+
+  return (
+    <SocketContext.Provider
+      value={{
+        socket,
+        onlineUsers,
+        notifCount,
+        setNotifCount,
+      }}
+    >
+      {children}
+    </SocketContext.Provider>
+  );
+};
