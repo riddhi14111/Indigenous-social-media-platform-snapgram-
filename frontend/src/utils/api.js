@@ -1,13 +1,13 @@
 import axios from "axios";
 
-const BACKEND_URL = import.meta.env.VITE_API_URL;
+const BASE_URL = import.meta.env.VITE_API_URL;
 
-if (!BACKEND_URL) {
+if (!BASE_URL) {
   console.error("VITE_API_URL missing!");
 }
 
 const api = axios.create({
-  baseURL: `${BACKEND_URL}/api`,
+  baseURL: `${BASE_URL}/api`,
   withCredentials: true,
 });
 
