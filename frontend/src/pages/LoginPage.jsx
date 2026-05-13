@@ -1,7 +1,7 @@
 import { create } from "zustand";
-import api from "../api/api"; // your axios instance
+import api from "../api"; // ✅ FIXED IMPORT (IMPORTANT)
 
-export const useAuthStore = create((set) => ({
+export const useAuthStore = create((set, get) => ({
   user: JSON.parse(localStorage.getItem("user")) || null,
   isLoading: false,
   isAuthenticated: !!localStorage.getItem("token"),
@@ -18,7 +18,7 @@ export const useAuthStore = create((set) => ({
 
       const { token, user } = res.data;
 
-      // ✅ SAVE TOKEN
+      // ✅ SAVE TOKEN + USER
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
@@ -39,7 +39,7 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  // 🔥 REGISTER (optional but good)
+  // 🔥 REGISTER
   register: async (data) => {
     set({ isLoading: true });
 
